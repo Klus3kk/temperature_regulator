@@ -37,3 +37,21 @@ def calculate_total_heat_loss(T, T_amb, k_g, k_w):
     Q_loss_glass = calculate_heat_loss_glass(T, T_amb, k_g)
     Q_loss_walls = calculate_heat_loss_walls(T, T_amb, k_w)
     return Q_loss_glass + Q_loss_walls
+
+def calculate_next_temperature(T, u, Q_max, Q_loss, C_v, d, V, T_p):
+    """
+    Calculate the next temperature based on the given parameters.
+    Parameters:
+    * T (float): Current temperature measured in K,
+    * u (float): Control signal (0 <= u <= 1),
+    * Q_max (float): Maximum heater power in W,
+    * Q_loss (float): Total heat loss in W,
+    * C_v (float): Specific heat capacity of air (J/(kg*K)),
+    * d (float): Air density in kg/m^3,
+    * V (float): Volume of the incubator in m^3,
+    * T_p (float): Time step in seconds.
+    Returns:
+    * float: Next temperature in K.
+    """
+    delta_T = ((u * Q_max - Q_loss) * T_p) / (C_v * d * V)
+    return T + delta_T
