@@ -64,3 +64,23 @@ def update_simulation():
         "time": simulation_state["time"],
         "temperature": simulation_state["temperature"]
     })
+    
+@app.route('/plot', methods=['GET'])
+def get_plot_data():
+    """Provide data for Plotly visualization"""
+    plot_data = {
+        "data": [
+            {
+                "x": [0,1,2],
+                "y": [293, 295, 297],
+                "type": "line",
+                "name": "Temperature"
+            }
+        ],
+        "layout": {
+            "title": "Temperature Over Time",
+            "xaxis": {"title": "Time (s)"},
+            "yaxis": {"title": "Temperature (K)"}
+        }
+    }
+    return jsonify(plot_data)
