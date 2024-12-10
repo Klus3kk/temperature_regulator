@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, render_template
 from modules.simulation import (
     calculate_heat_loss_glass,
     calculate_heat_loss_walls,
@@ -25,6 +25,12 @@ simulation_params = {
     "k_w": 0.5,
     "T_amb": 293
 }
+
+
+@app.route('/')
+def index():
+    """Serves the main HTML page"""
+    return render_template('index.html')
 
 @app.route('/update', methods=['POST'])
 def update_simulation():
