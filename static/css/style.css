@@ -1,0 +1,52 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: row;
+    height: 100vh;
+}
+
+.container {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+}
+
+.plot-section {
+    flex: 2;
+    padding: 20px;
+    border-right: 1px solid #ccc;
+}
+
+.controls-section {
+    flex: 1;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+.controls-section h2 {
+    margin-bottom: 20px;
+}
+
+.control {
+    margin-bottom: 15px;
+    width: 100%;
+}
+
+.control label {
+    display: block;
+    margin-bottom: 5px;
+}
+
+input[type="range"] {
+    width: 100%;
+}
+
+select {
+    width: 100%;
+    padding: 5px;
+    font-size: 14px;
+}

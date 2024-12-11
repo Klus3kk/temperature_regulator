@@ -85,14 +85,17 @@ def get_plot_data():
 
 @app.route('/update-params', methods=['POST'])
 def update_params():
-    global simulation_params
+    global simulation_params, simulation_state
     data = request.json
-    for key in simulation_params.keys():
-        if key in data:
-            simulation_params[key] = data[key]
+    simulation_state["control_signal"] = data.get("control_signal", simulation_state["control_signal"])
+    simulation_params["V"] = data.get("V", simulation_params["V"])
+    simulation_params["k_g"] = data.get("k_g", simulation_params["k_g"])
+    simulation_params["k_w"] = data.get("k_w", simulation_params["k_w"])
+    simulation_params["T_amb"] = data.get("T_amb", simulation_params["T_amb"])
     return jsonify({
         "message": "Parameters updated successfully",
-        "parameters": simulation_params
+        "parameters": simulation_params,
+        "states": simulation_state
     })
 
 if __name__ == '__main__':

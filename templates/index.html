@@ -1,1 +1,56 @@
-{% comment %} Main Site (slider, div for plot) {% endcomment %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Temperature Regulator</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <div class="plot-section">
+            <h1>Temperature Regulator</h1>
+            <div id="plot"></div>
+        </div>
+        <div class="controls-section">
+            <h2>Controls</h2>
+
+             <!-- signal slider -->
+             <div class="control">
+                <label for="signal_slider">u: <span id="signal_value">0.0</span></label>
+                <input type="range" id="signal_slider" min="0.0" max="1" step="0.1" value="0.0">
+            </div>
+
+            <!-- volume slider -->
+            <div class="control">
+                <label for="volume_slider">V: <span id="volume_value">0.5</span> m³</label>
+                <input type="range" id="volume_slider" min="0.5" max="5" step="0.5" value="0.0">
+            </div>
+
+            <!-- k_g slider -->
+            <div class="control">
+                <label for="k_g_slider">k_g: <span id="k_g_value">1</span></label>
+                <input type="range" id="k_g_slider" min="0.5" max="2" step="0.5" value="1">
+            </div>
+
+            <!-- k_w slider -->
+            <div class="control">
+                <label for="k_w_slider">k_w: <span id="k_w_value">0.4</span></label>
+                <input type="range" id="k_w_slider" min="0.2" max="1" step="0.2" value="0.4">
+            </div>
+
+            <!-- Ambient temperature slider -->
+            <div class="control">
+                <label for="t_amb_slider">Ambient Temperature: <span id="t_amb_value">293</span> K (<span id="t_amb_celsius">20</span> °C)</label>
+                <input type="range" id="t_amb_slider" min="293" max="298" step="1" value="293">
+            </div>
+
+            <!-- Update parameters button -->
+            <div class="control">
+                <button id="update_button">Update Parameters</button>
+            </div>
+        </div>
+    </div>
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+</html>
