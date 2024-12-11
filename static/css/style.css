@@ -1,52 +1,126 @@
+/* General Styles */
 body {
-    font-family: Arial, sans-serif;
+    font-family: 'Arial', sans-serif;
     margin: 0;
     padding: 0;
     display: flex;
-    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    background-color: #121212;
+    color: #e0e0e0;
     height: 100vh;
 }
 
-.container {
+/* Main Container */
+#container {
     display: flex;
     flex-direction: row;
-    width: 100%;
+    justify-content: center;
+    align-items: stretch; /* Ensures equal panel heights */
+    gap: 20px; /* Spacing between panels */
+    width: 90%;
+    height: 85%; /* Slightly reduce height */
+    padding-top: 10px; /* Move panels upward */
 }
 
-.plot-section {
-    flex: 2;
-    padding: 20px;
-    border-right: 1px solid #ccc;
-}
-
-.controls-section {
-    flex: 1;
-    padding: 20px;
+/* Left Panel */
+#left-panel {
+    width: 22%;
+    background: #1e1e1e;
+    padding: 15px;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
     display: flex;
     flex-direction: column;
-    align-items: flex-start;
+    justify-content: flex-start; /* Align to the top */
+    height: 100%;
 }
 
-.controls-section h2 {
-    margin-bottom: 20px;
+/* Centering Heading and Adjusting Text Spacing */
+#left-panel h2 {
+    text-align: center; 
+    margin-bottom: 15px; /* Add proper spacing below heading */
 }
 
 .control {
-    margin-bottom: 15px;
-    width: 100%;
+    margin-bottom: 15px; /* Add space between controls */
 }
 
 .control label {
     display: block;
-    margin-bottom: 5px;
+    margin-bottom: 8px; /* Space between label and slider */
+    font-weight: bold;
 }
 
-input[type="range"] {
-    width: 100%;
+/* Right Panel */
+#right-panel {
+    flex-grow: 2;
+    padding: 15px;
+    background: #1e1e1e;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
 }
 
-select {
+#plot {
     width: 100%;
-    padding: 5px;
+    height: 90%;
+    border: 1px solid #444;
+    border-radius: 10px;
+    background-color: #222222;
+    transition: width 0.3s, height 0.3s;
+}
+
+.plotly .main-svg .cartesianlayer .plot .scatter.trace .lines path {
+    stroke: #ff0000 !important; 
+}
+
+/* Slider Customization */
+.control input[type="range"] {
+    width: 100%;
+    height: 8px;
+    -webkit-appearance: none;
+    background: #555; 
+    border-radius: 5px;
+    outline: none;
+    cursor: pointer;
+}
+
+.control input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 15px;
+    height: 15px;
+    border-radius: 50%;
+    background: #ff0000; 
+    cursor: pointer;
+    box-shadow: 0 0 3px rgba(255, 0, 0, 0.7);
+}
+
+.control input[type="range"]::-moz-range-thumb {
+    width: 15px;
+    height: 15px;
+    border-radius: 50%;
+    background: #ff0000; 
+    cursor: pointer;
+    box-shadow: 0 0 3px rgba(255, 0, 0, 0.7);
+}
+
+/* Buttons */
+button {
+    width: 100%;
+    padding: 12px;
+    background-color: #ff0000; 
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
     font-size: 14px;
+}
+
+button:hover {
+    background-color: #cc0000; 
 }

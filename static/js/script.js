@@ -1,69 +1,84 @@
-document.addEventListener('DOMContentLoaded', () => {
-    const signalSlider = document.getElementById('signal_slider');
-    const volumeSlider = document.getElementById('volume_slider');
-    const kGSlider = document.getElementById('k_g_slider');
-    const kWSlider = document.getElementById('k_w_slider');
-    const tAmbSlider = document.getElementById('t_amb_slider');
-    const updateButton = document.getElementById('update_button');
-
-    const signalValue = document.getElementById('signal_value');
-    const volumeValue = document.getElementById('volume_value');
-    const kGValue = document.getElementById('k_g_value');
-    const kWValue = document.getElementById('k_w_value');
-    const tAmbValue = document.getElementById('t_amb_value');
-    const tAmbCelsius = document.getElementById('t_amb_celsius');
-
-    // Update values dynamically as sliders/pickers are adjusted
-    signalSlider.addEventListener('input', () => {
-        signalValue.textContent = signalSlider.value;
-    });
-
-    volumeSlider.addEventListener('input', () => {
-        volumeValue.textContent = volumeSlider.value;
-    });
-
-    kGSlider.addEventListener('input', () => {
-        kGValue.textContent = kGSlider.value;
-    });
-
-    kWSlider.addEventListener('input', () => {
-        kWValue.textContent = kWSlider.value;
-    });
-
-    tAmbSlider.addEventListener('input', () => {
-        const kelvin = tAmbSlider.value;
-        const celsius = (kelvin - 273).toFixed(1);
-        tAmbValue.textContent = kelvin;
-        tAmbCelsius.textContent = celsius;
-    });
-
-    // Send data to backend when the button is clicked
-    updateButton.addEventListener('click', () => {
-        const params = {
-            u: parseFloat(signalSlider.value),
-            V: parseFloat(volumeSlider.value),
-            k_g: parseFloat(kGSlider.value),
-            k_w: parseFloat(kWSlider.value),
-            T_amb: parseInt(tAmbSlider.value)
-        };
-
-        fetch('/update-params', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(params)
-        });
-        updatePlot()
-    });
-
-    // Fetch and update plot dynamically
-    const updatePlot = () => {
-        fetch('/plot')
-            .then(response => response.json())
-            .then(data => {
-                const plotDiv = document.getElementById('plot');
-                Plotly.react(plotDiv, data.data, data.layout);
-            });
+document.addEventListener("DOMContentLoaded", () => {
+    const sliders = {
+        Q_max: document.getElementById("Q_max"),
+        C_v: document.getElementById("C_v"),
+        T_amb: document.getElementById("T_amb"),
+        k_g: document.getElementById("k_g"),
+        k_w: document.getElementById("k_w"),
+        u: document.getElementById("control-signal"),
     };
+
+    const values = {
+        Q_max: document.getElementById("Q_max_value"),
+        C_v: document.getElementById("C_v_value"),
+        T_amb: document.getElementById("T_amb_value"),
+        T_amb_celsius: document.getElementById("T_amb_celsius"),
+        k_g: document.getElementById("k_g_value"),
+        k_w: document.getElementById("k_w_value"),
+        u: document.getElementById("control_value"),
+    };
+
+    const updateParamsButton = document.getElementById("update-params");
+    const updateMessage = document.getElementById("update-message");
+    const plotDiv = document.getElementById("plot");
+
+    Object.keys(sliders).forEach((key) => {
+        sliders[key].addEventListener("input", () => {
+            values[key].textContent = sliders[key].value;
+            if (key === "T_amb") {
+                values.T_amb_celsius.textContent = (sliders.T_amb.value - 273).toFixed(1);
+            }
+        });
+    });
+
+    const updateGraph = () => {
+        fetch("/plot")
+            .then((response) => response.json())
+            .then((data) => {
+                data.layout.plot_bgcolor = "#222222";
+                data.layout.paper_bgcolor = "#121212";
+                data.layout.font = { color: "#e0e0e0" };
+                data.layout.xaxis = { gridcolor: "#444" };
+                data.layout.yaxis = { gridcolor: "#444" };
+                Plotly.react(plotDiv, data.data, data.layout);
+            })
+            .catch((err) => console.error("Error updating graph:", err));
+    };
+
+    updateParamsButton.addEventListener("click", () => {
+        const params = {};
+        Object.keys(sliders).forEach((key) => {
+            params[key] = parseFloat(sliders[key].value);
+        });
+
+        fetch("/update-params", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(params),
+        })
+            .then(() => {
+                updateMessage.style.display = "block";
+                setTimeout(() => {
+                    updateMessage.style.display = "none";
+                }, 2000);
+                updateGraph();
+            })
+            .catch((err) => console.error("Error updating parameters:", err));
+    });
+
+    sliders.u.addEventListener("input", () => {
+        const u = parseFloat(sliders.u.value);
+        fetch("/update", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ u }),
+        }).then(() => updateGraph());
+    });
+
+    // Handle window resizing for responsive plot
+    window.addEventListener("resize", () => {
+        Plotly.Plots.resize(plotDiv);
+    });
+
+    updateGraph();
 });

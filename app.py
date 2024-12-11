@@ -32,12 +32,14 @@ def index():
     """Serves the main HTML page"""
     return render_template('index.html')
 
+
 @app.route('/update', methods=['POST'])
 def update_simulation():
     global simulation_state, simulation_params
     data = request.json
     simulation_state["control_signal"] = data.get("u", 0)
 
+    # Calculate total heat loss
     Q_loss = calculate_total_heat_loss(
         simulation_state["temperature"],
         simulation_params["T_amb"],
@@ -45,7 +47,8 @@ def update_simulation():
         simulation_params["k_w"]
     )
 
-    simulation_state["temperature"] = calculate_next_temperature(
+    # Update temperature
+    new_temperature = calculate_next_temperature(
         simulation_state["temperature"],
         simulation_state["control_signal"],
         simulation_params["Q_max"],
@@ -56,14 +59,18 @@ def update_simulation():
         simulation_params["T_p"]
     )
 
+    simulation_state["temperature"] = new_temperature
     simulation_state["time"] += simulation_params["T_p"]
+
+    # Append new data to history
     simulation_state["history"]["time"].append(simulation_state["time"])
-    simulation_state["history"]["temperature"].append(simulation_state["temperature"])
+    simulation_state["history"]["temperature"].append(new_temperature)
 
     return jsonify({
         "time": simulation_state["time"],
         "temperature": simulation_state["temperature"]
     })
+
 
 @app.route('/plot', methods=['GET'])
 def get_plot_data():
@@ -72,7 +79,8 @@ def get_plot_data():
             {
                 "x": simulation_state["history"]["time"],
                 "y": simulation_state["history"]["temperature"],
-                "type": "line",
+                "type": "scatter",
+                "mode": "lines",
                 "name": "Temperature"
             }
         ],
@@ -83,20 +91,19 @@ def get_plot_data():
         }
     })
 
+
 @app.route('/update-params', methods=['POST'])
 def update_params():
-    global simulation_params, simulation_state
+    global simulation_params
     data = request.json
-    simulation_state["control_signal"] = data.get("control_signal", simulation_state["control_signal"])
-    simulation_params["V"] = data.get("V", simulation_params["V"])
-    simulation_params["k_g"] = data.get("k_g", simulation_params["k_g"])
-    simulation_params["k_w"] = data.get("k_w", simulation_params["k_w"])
-    simulation_params["T_amb"] = data.get("T_amb", simulation_params["T_amb"])
+    for key, value in data.items():
+        if key in simulation_params:
+            simulation_params[key] = value
     return jsonify({
         "message": "Parameters updated successfully",
-        "parameters": simulation_params,
-        "states": simulation_state
+        "parameters": simulation_params
     })
+
 
 if __name__ == '__main__':
     app.run(debug=True)

@@ -4,53 +4,50 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Temperature Regulator</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script src="{{ url_for('static', filename='js/script.js') }}" defer></script>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
-    <div class="container">
-        <div class="plot-section">
-            <h1>Temperature Regulator</h1>
+    <div id="container">
+        <!-- Left Panel: Controls -->
+        <div id="left-panel">
+            <h2>Adjust Parameters</h2>
+            <form id="param-form">
+                <div class="control">
+                    <label for="Q_max">Q_max (Max Heater Power): <span id="Q_max_value">1000</span> W</label>
+                    <input type="range" id="Q_max" name="Q_max" min="500" max="2000" step="100" value="1000">
+                </div>
+                <div class="control">
+                    <label for="C_v">C_v (Specific Heat Capacity): <span id="C_v_value">900</span> J/(kg·K)</label>
+                    <input type="range" id="C_v" name="C_v" min="500" max="1500" step="50" value="900">
+                </div>
+                <div class="control">
+                    <label for="T_amb">T_amb (Ambient Temperature): <span id="T_amb_value">293</span> K (<span id="T_amb_celsius">20</span> °C)</label>
+                    <input type="range" id="T_amb" name="T_amb" min="273" max="313" step="1" value="293">
+                </div>
+                <div class="control">
+                    <label for="k_g">k_g (Glass Heat Loss): <span id="k_g_value">0.8</span></label>
+                    <input type="range" id="k_g" name="k_g" min="0.5" max="2.0" step="0.1" value="0.8">
+                </div>
+                <div class="control">
+                    <label for="k_w">k_w (Wall Heat Loss): <span id="k_w_value">0.5</span></label>
+                    <input type="range" id="k_w" name="k_w" min="0.2" max="1.0" step="0.1" value="0.5">
+                </div>
+                <button type="button" id="update-params">Update Parameters</button>
+                <div id="update-message" style="color: green; margin-top: 10px; display: none;">Parameters updated successfully!</div>
+            </form>
+            <h2>Control Signal</h2>
+            <div class="control">
+                <label for="control-signal">u: <span id="control_value">0.0</span></label>
+                <input type="range" id="control-signal" min="0.0" max="1.0" step="0.01" value="0.0">
+            </div>
+        </div>
+
+        <!-- Right Panel: Visualization -->
+        <div id="right-panel">
             <div id="plot"></div>
         </div>
-        <div class="controls-section">
-            <h2>Controls</h2>
-
-             <!-- signal slider -->
-             <div class="control">
-                <label for="signal_slider">u: <span id="signal_value">0.0</span></label>
-                <input type="range" id="signal_slider" min="0.0" max="1" step="0.1" value="0.0">
-            </div>
-
-            <!-- volume slider -->
-            <div class="control">
-                <label for="volume_slider">V: <span id="volume_value">0.5</span> m³</label>
-                <input type="range" id="volume_slider" min="0.5" max="5" step="0.5" value="0.0">
-            </div>
-
-            <!-- k_g slider -->
-            <div class="control">
-                <label for="k_g_slider">k_g: <span id="k_g_value">1</span></label>
-                <input type="range" id="k_g_slider" min="0.5" max="2" step="0.5" value="1">
-            </div>
-
-            <!-- k_w slider -->
-            <div class="control">
-                <label for="k_w_slider">k_w: <span id="k_w_value">0.4</span></label>
-                <input type="range" id="k_w_slider" min="0.2" max="1" step="0.2" value="0.4">
-            </div>
-
-            <!-- Ambient temperature slider -->
-            <div class="control">
-                <label for="t_amb_slider">Ambient Temperature: <span id="t_amb_value">293</span> K (<span id="t_amb_celsius">20</span> °C)</label>
-                <input type="range" id="t_amb_slider" min="293" max="298" step="1" value="293">
-            </div>
-
-            <!-- Update parameters button -->
-            <div class="control">
-                <button id="update_button">Update Parameters</button>
-            </div>
-        </div>
     </div>
-    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
 </body>
 </html>
