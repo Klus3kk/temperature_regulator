@@ -11,11 +11,14 @@ app = Flask(__name__)
 simulation_state = {
     "temperature": 293,
     "time": 0,
+    "heat_loss": 0,
     "control_signal": 0,
-    "history": {"time": [0], "temperature": [293]}
+    "temp_history": {"time": [0], "temperature": [293]},
+    "heat_history": {"time": [0], "heat_loss": [0]}
 }
 
 simulation_params = {
+    "S_time": 1800, # staly czas działania symulacji, żeby nie pompować sliderem, na razie tylko parametr stworzyłem
     "Q_max": 1000,
     "C_v": 900,
     "d": 1.1225,
@@ -23,7 +26,8 @@ simulation_params = {
     "T_p": 1,
     "k_g": 0.8,
     "k_w": 0.5,
-    "T_amb": 293
+    "T_amb": 293,
+    "T_target": 303
 }
 
 
@@ -37,7 +41,7 @@ def index():
 def update_simulation():
     global simulation_state, simulation_params
     data = request.json
-    simulation_state["control_signal"] = data.get("u", 0)
+    #simulation_state["control_signal"] = data.get("u", 0)
 
     # Calculate total heat loss
     Q_loss = calculate_total_heat_loss(
@@ -58,27 +62,33 @@ def update_simulation():
         simulation_params["V"],
         simulation_params["T_p"]
     )
-
+    simulation_state["heat_loss"] = Q_loss
     simulation_state["temperature"] = new_temperature
     simulation_state["time"] += simulation_params["T_p"]
 
     # Append new data to history
-    simulation_state["history"]["time"].append(simulation_state["time"])
-    simulation_state["history"]["temperature"].append(new_temperature)
+    simulation_state["temp_history"]["time"].append(simulation_state["time"])
+    simulation_state["temp_history"]["temperature"].append(new_temperature)
+
+    simulation_state["heat_history"]["time"].append(simulation_state["time"])
+    simulation_state["heat_history"]["heat_loss"].append(Q_loss)
+
 
     return jsonify({
         "time": simulation_state["time"],
-        "temperature": simulation_state["temperature"]
+        "temperature": simulation_state["temperature"],
+        "heat_loss": simulation_state["heat_loss"]
     })
 
 
-@app.route('/plot', methods=['GET'])
-def get_plot_data():
+@app.route('/temp-plot', methods=['GET'])
+def get_temp_plot_data():
+    temp_in_celsius = [temp - 273.15 for temp in simulation_state["temp_history"]["temperature"]]
     return jsonify({
         "data": [
             {
-                "x": simulation_state["history"]["time"],
-                "y": simulation_state["history"]["temperature"],
+                "x": simulation_state["temp_history"]["time"],
+                "y": temp_in_celsius, 
                 "type": "scatter",
                 "mode": "lines",
                 "name": "Temperature"
@@ -87,7 +97,26 @@ def get_plot_data():
         "layout": {
             "title": "Temperature Over Time",
             "xaxis": {"title": "Time (s)"},
-            "yaxis": {"title": "Temperature (K)"}
+            "yaxis": {"title": "Temperature (°C)"}
+        }
+    })
+
+@app.route('/heat-plot', methods=['GET'])
+def get_heat_plot_data():
+    return jsonify({
+        "data": [
+            {
+                "x": simulation_state["heat_history"]["time"],
+                "y": simulation_state["heat_history"]["heat_loss"],
+                "type": "scatter",
+                "mode": "lines",
+                "name": "Heat"
+            }
+        ],
+        "layout": {
+            "title": "Heat loss Over Time",
+            "xaxis": {"title": "Time (s)"},
+            "yaxis": {"title": "Heat (W)"}
         }
     })
 

@@ -1,54 +1,73 @@
 document.addEventListener("DOMContentLoaded", () => {
     const sliders = {
-        Q_max: document.getElementById("Q_max"),
-        C_v: document.getElementById("C_v"),
+        T_target: document.getElementById("T_target"),
         T_amb: document.getElementById("T_amb"),
-        k_g: document.getElementById("k_g"),
-        k_w: document.getElementById("k_w"),
-        u: document.getElementById("control-signal"),
     };
 
     const values = {
-        Q_max: document.getElementById("Q_max_value"),
-        C_v: document.getElementById("C_v_value"),
+        T_target: document.getElementById("T_target_value"),
         T_amb: document.getElementById("T_amb_value"),
-        T_amb_celsius: document.getElementById("T_amb_celsius"),
-        k_g: document.getElementById("k_g_value"),
-        k_w: document.getElementById("k_w_value"),
-        u: document.getElementById("control_value"),
     };
 
     const updateParamsButton = document.getElementById("update-params");
     const updateMessage = document.getElementById("update-message");
-    const plotDiv = document.getElementById("plot");
+    const tempPlotDiv = document.getElementById("temp-plot");
+    const heatPlotDiv = document.getElementById("heat-plot");
 
     Object.keys(sliders).forEach((key) => {
         sliders[key].addEventListener("input", () => {
             values[key].textContent = sliders[key].value;
-            if (key === "T_amb") {
-                values.T_amb_celsius.textContent = (sliders.T_amb.value - 273).toFixed(1);
-            }
         });
     });
 
-    const updateGraph = () => {
-        fetch("/plot")
+    const updateGraphs = () => {
+        const plotBgColor = "#222222";
+        const paperBgColor =  "#121212";
+        const fontColor = "#e0e0e0";
+        const xGridColor = "#444";
+        const yGridColor = "#444";
+        fetch("/temp-plot")
             .then((response) => response.json())
             .then((data) => {
-                data.layout.plot_bgcolor = "#222222";
-                data.layout.paper_bgcolor = "#121212";
-                data.layout.font = { color: "#e0e0e0" };
-                data.layout.xaxis = { gridcolor: "#444" };
-                data.layout.yaxis = { gridcolor: "#444" };
-                Plotly.react(plotDiv, data.data, data.layout);
+                data.layout.plot_bgcolor = plotBgColor;
+                data.layout.paper_bgcolor = paperBgColor;
+                data.layout.font = { color: fontColor };
+                data.layout.xaxis = {
+                    ...data.layout.xaxis,
+                    gridcolor: xGridColor,
+                };
+                data.layout.yaxis = {
+                    ...data.layout.yaxis,
+                    gridcolor: yGridColor,
+                };
+                Plotly.react(tempPlotDiv, data.data, data.layout);
             })
-            .catch((err) => console.error("Error updating graph:", err));
+            .catch((err) => console.error("Error updating temperature graph:", err));
+        fetch("/heat-plot")
+            .then((response) => response.json())
+            .then((data) => {
+                data.layout.plot_bgcolor = plotBgColor;
+                data.layout.paper_bgcolor = paperBgColor;
+                data.layout.font = { color: fontColor };
+                data.layout.xaxis = {
+                    ...data.layout.xaxis,
+                    gridcolor: xGridColor,
+                };
+                data.layout.yaxis = {
+                    ...data.layout.yaxis,
+                    gridcolor: yGridColor,
+                };
+                Plotly.react(heatPlotDiv, data.data, data.layout);
+            })
+            .catch((err) => console.error("Error updating temperature graph:", err));
     };
 
     updateParamsButton.addEventListener("click", () => {
         const params = {};
         Object.keys(sliders).forEach((key) => {
-            params[key] = parseFloat(sliders[key].value);
+            const valueCelsius = parseFloat(sliders[key].value);
+            const valueKelvin = valueCelsius + 273;
+            params[key] = valueKelvin;
         });
 
         fetch("/update-params", {
@@ -61,24 +80,15 @@ document.addEventListener("DOMContentLoaded", () => {
                 setTimeout(() => {
                     updateMessage.style.display = "none";
                 }, 2000);
-                updateGraph();
+                updateGraphs();
             })
             .catch((err) => console.error("Error updating parameters:", err));
     });
 
-    sliders.u.addEventListener("input", () => {
-        const u = parseFloat(sliders.u.value);
-        fetch("/update", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ u }),
-        }).then(() => updateGraph());
-    });
-
     // Handle window resizing for responsive plot
     window.addEventListener("resize", () => {
-        Plotly.Plots.resize(plotDiv);
+        Plotly.Plots.resize(tempPlotDiv);
     });
 
-    updateGraph();
+    updateGraphs();
 });

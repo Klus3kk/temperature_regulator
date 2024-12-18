@@ -25,7 +25,7 @@ body {
 
 /* Left Panel */
 #left-panel {
-    width: 22%;
+    width: 10%;
     background: #1e1e1e;
     padding: 15px;
     border-radius: 10px;
@@ -66,7 +66,8 @@ body {
     height: 100%;
 }
 
-#plot {
+#temp-plot,
+#heat-plot {
     width: 100%;
     height: 90%;
     border: 1px solid #444;
@@ -75,7 +76,12 @@ body {
     transition: width 0.3s, height 0.3s;
 }
 
-.plotly .main-svg .cartesianlayer .plot .scatter.trace .lines path {
+
+.plotly .main-svg .cartesianlayer .temp-plot .scatter.trace .lines path {
+    stroke: #ff0000 !important; 
+}
+
+.plotly .main-svg .cartesianlayer .heat-plot .scatter.trace .lines path {
     stroke: #ff0000 !important; 
 }
 
