@@ -1,4 +1,5 @@
 document.addEventListener("DOMContentLoaded", () => {
+    // Sliders and values
     const sliders = {
         T_target: document.getElementById("T_target"),
         T_amb: document.getElementById("T_amb"),
@@ -9,61 +10,63 @@ document.addEventListener("DOMContentLoaded", () => {
         T_amb: document.getElementById("T_amb_value"),
     };
 
+    // Elements for update and graphs
     const updateParamsButton = document.getElementById("update-params");
     const updateMessage = document.getElementById("update-message");
     const tempPlotDiv = document.getElementById("temp-plot");
     const heatPlotDiv = document.getElementById("heat-plot");
+    const heatBalancePlotDiv = document.getElementById("heat-balance-plot");
 
+    // Update displayed values dynamically
     Object.keys(sliders).forEach((key) => {
         sliders[key].addEventListener("input", () => {
             values[key].textContent = sliders[key].value;
         });
     });
 
+    // Fetch and update all graphs
     const updateGraphs = () => {
-        const plotBgColor = "#222222";
-        const paperBgColor =  "#121212";
-        const fontColor = "#e0e0e0";
-        const xGridColor = "#444";
-        const yGridColor = "#444";
+        const layoutConfig = {
+            plot_bgcolor: "#222222",
+            paper_bgcolor: "#121212",
+            font: { color: "#e0e0e0" },
+            xaxis: { gridcolor: "#444" },
+            yaxis: { gridcolor: "#444" },
+        };
+
+        // Fetch temperature graph data
         fetch("/temp-plot")
             .then((response) => response.json())
             .then((data) => {
-                data.layout.plot_bgcolor = plotBgColor;
-                data.layout.paper_bgcolor = paperBgColor;
-                data.layout.font = { color: fontColor };
-                data.layout.xaxis = {
-                    ...data.layout.xaxis,
-                    gridcolor: xGridColor,
-                };
-                data.layout.yaxis = {
-                    ...data.layout.yaxis,
-                    gridcolor: yGridColor,
-                };
+                data.layout = { ...data.layout, ...layoutConfig };
                 Plotly.react(tempPlotDiv, data.data, data.layout);
             })
             .catch((err) => console.error("Error updating temperature graph:", err));
+
+        // Fetch heat loss graph data
         fetch("/heat-plot")
             .then((response) => response.json())
             .then((data) => {
-                data.layout.plot_bgcolor = plotBgColor;
-                data.layout.paper_bgcolor = paperBgColor;
-                data.layout.font = { color: fontColor };
-                data.layout.xaxis = {
-                    ...data.layout.xaxis,
-                    gridcolor: xGridColor,
-                };
-                data.layout.yaxis = {
-                    ...data.layout.yaxis,
-                    gridcolor: yGridColor,
-                };
+                data.layout = { ...data.layout, ...layoutConfig };
                 Plotly.react(heatPlotDiv, data.data, data.layout);
             })
-            .catch((err) => console.error("Error updating temperature graph:", err));
+            .catch((err) => console.error("Error updating heat loss graph:", err));
+
+        // Fetch heat balance graph data
+        fetch("/heat-balance-plot")
+            .then((response) => response.json())
+            .then((data) => {
+                data.layout = { ...data.layout, ...layoutConfig };
+                Plotly.react(heatBalancePlotDiv, data.data, data.layout);
+            })
+            .catch((err) => console.error("Error updating heat balance graph:", err));
     };
 
+    // Update parameters when the button is clicked
     updateParamsButton.addEventListener("click", () => {
         const params = {};
+
+        // Gather slider values (convert to Kelvin)
         Object.keys(sliders).forEach((key) => {
             const valueCelsius = parseFloat(sliders[key].value);
             const valueKelvin = valueCelsius + 273;
@@ -76,19 +79,25 @@ document.addEventListener("DOMContentLoaded", () => {
             body: JSON.stringify(params),
         })
             .then(() => {
+                // Show confirmation message
                 updateMessage.style.display = "block";
                 setTimeout(() => {
                     updateMessage.style.display = "none";
                 }, 2000);
+
+                // Update graphs
                 updateGraphs();
             })
             .catch((err) => console.error("Error updating parameters:", err));
     });
 
-    // Handle window resizing for responsive plot
+    // Adjust plot sizes when resizing the window
     window.addEventListener("resize", () => {
         Plotly.Plots.resize(tempPlotDiv);
+        Plotly.Plots.resize(heatPlotDiv);
+        Plotly.Plots.resize(heatBalancePlotDiv);
     });
 
+    // Initial graph rendering
     updateGraphs();
 });

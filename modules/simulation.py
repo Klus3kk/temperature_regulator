@@ -55,3 +55,13 @@ def calculate_next_temperature(T, u, Q_max, Q_loss, C_v, d, V, T_p):
     """
     delta_T = ((u * Q_max - Q_loss) * T_p) / (C_v * d * V)
     return T + delta_T
+
+
+def calculate_control_signal(T_target, T_current, K_p, K_i, error_sum, T_p):
+    """
+    Calculates the control signal using a PI controller.
+    """
+    error = T_target - T_current
+    error_sum += error * T_p  # Integral component
+    control_signal = K_p * error + K_i * error_sum
+    return max(0, min(control_signal, 1)), error_sum  # Signal clamped to [0, 1]
