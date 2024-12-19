@@ -21,7 +21,7 @@ simulation_state = {
 }
 
 simulation_params = {
-    "S_time": 1800,  # Simulation duration (optional)
+    "S_time": 1800,  # Simulation duration
     "Q_max": 1000,  # Maximum heater power in W
     "C_v": 900,  # Specific heat capacity of air (J/(kg*K))
     "d": 1.1225,  # Air density in kg/m^3
@@ -46,50 +46,57 @@ def index():
 def update_simulation():
     global simulation_state, simulation_params
 
+   # Reset history
+    simulation_state["temp_history"] = {"time": [0], "temperature": [simulation_params["T_amb"]]}
+    simulation_state["heat_history"] = {"time": [0], "heat_loss": [0]}
+    simulation_state["heat_balance_history"] = {"time": [0], "supplied": [0], "lost": [0]}
+    simulation_state["time"] = 0
+    simulation_state["temperature"] = simulation_params["T_amb"]
+
     # Debug print for incoming updates
     print("Before Update:", simulation_state)
+    for _ in range(int(simulation_params["S_time"] / simulation_params["T_p"]) + 1):
+        control_signal, simulation_params["error_sum"] = calculate_control_signal(
+            simulation_params["T_target"],
+            simulation_state["temperature"],
+            simulation_params["K_p"],
+            simulation_params["K_i"],
+            simulation_params["error_sum"],
+            simulation_params["T_p"],
+        )
+        simulation_state["control_signal"] = control_signal
 
-    control_signal, simulation_params["error_sum"] = calculate_control_signal(
-        simulation_params["T_target"],
-        simulation_state["temperature"],
-        simulation_params["K_p"],
-        simulation_params["K_i"],
-        simulation_params["error_sum"],
-        simulation_params["T_p"],
-    )
-    simulation_state["control_signal"] = control_signal
+        Q_loss = calculate_total_heat_loss(
+            simulation_state["temperature"],
+            simulation_params["T_amb"],
+            simulation_params["k_g"],
+            simulation_params["k_w"],
+        )
+        Q_supplied = control_signal * simulation_params["Q_max"]
+        new_temperature = calculate_next_temperature(
+            simulation_state["temperature"],
+            control_signal,
+            simulation_params["Q_max"],
+            Q_loss,
+            simulation_params["C_v"],
+            simulation_params["d"],
+            simulation_params["V"],
+            simulation_params["T_p"],
+        )
 
-    Q_loss = calculate_total_heat_loss(
-        simulation_state["temperature"],
-        simulation_params["T_amb"],
-        simulation_params["k_g"],
-        simulation_params["k_w"],
-    )
-    Q_supplied = control_signal * simulation_params["Q_max"]
-    new_temperature = calculate_next_temperature(
-        simulation_state["temperature"],
-        control_signal,
-        simulation_params["Q_max"],
-        Q_loss,
-        simulation_params["C_v"],
-        simulation_params["d"],
-        simulation_params["V"],
-        simulation_params["T_p"],
-    )
+        simulation_state["heat_loss"] = Q_loss
+        simulation_state["supplied_heat"] = Q_supplied
+        simulation_state["temperature"] = new_temperature
+        simulation_state["time"] += simulation_params["T_p"]
 
-    simulation_state["heat_loss"] = Q_loss
-    simulation_state["supplied_heat"] = Q_supplied
-    simulation_state["temperature"] = new_temperature
-    simulation_state["time"] += simulation_params["T_p"]
-
-    # Append to history
-    simulation_state["temp_history"]["time"].append(simulation_state["time"])
-    simulation_state["temp_history"]["temperature"].append(new_temperature)
-    simulation_state["heat_history"]["time"].append(simulation_state["time"])
-    simulation_state["heat_history"]["heat_loss"].append(Q_loss)
-    simulation_state["heat_balance_history"]["time"].append(simulation_state["time"])
-    simulation_state["heat_balance_history"]["supplied"].append(Q_supplied)
-    simulation_state["heat_balance_history"]["lost"].append(Q_loss)
+        # Append to history
+        simulation_state["temp_history"]["time"].append(simulation_state["time"])
+        simulation_state["temp_history"]["temperature"].append(new_temperature)
+        simulation_state["heat_history"]["time"].append(simulation_state["time"])
+        simulation_state["heat_history"]["heat_loss"].append(Q_loss)
+        simulation_state["heat_balance_history"]["time"].append(simulation_state["time"])
+        simulation_state["heat_balance_history"]["supplied"].append(Q_supplied)
+        simulation_state["heat_balance_history"]["lost"].append(Q_loss)
 
     # Debug print after update
     print("After Update:", simulation_state)

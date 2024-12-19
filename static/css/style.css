@@ -67,7 +67,7 @@ body {
 }
 
 #temp-plot,
-#heat-plot {
+#heat-balance-plot {
     width: 100%;
     height: 90%;
     border: 1px solid #444;
