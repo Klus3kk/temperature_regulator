@@ -21,19 +21,21 @@ simulation_state = {
 }
 
 simulation_params = {
-    "S_time": 1800,  # Simulation duration
-    "Q_max": 1000,  # Maximum heater power in W
-    "C_v": 900,  # Specific heat capacity of air (J/(kg*K))
-    "d": 1.1225,  # Air density in kg/m^3
+    "S_time": 1000,  # Simulation duration
+    "Q_max": 750,  # Maximum heater power in W
+    "C_v": 1200,  # Specific heat capacity of air (J/(kg*K))
+    "d": 1.2,  # Air density in kg/m^3
     "V": 0.5,  # Volume in m^3
-    "T_p": 1,  # Time step in seconds
-    "k_g": 0.8,  # Heat transfer coefficient for glass
-    "k_w": 0.5,  # Heat transfer coefficient for walls
+    "T_p": 0.5,  # Time step in seconds /// okres próbkowania
+    "k_g": 5,  # Heat transfer coefficient for glass
+    "k_w": 2,  # Heat transfer coefficient for walls
     "T_amb": 293,  # Ambient temperature (K)
     "T_target": 303,  # Target temperature (K)
-    "K_p": 0.5,  # PI controller proportional gain
-    "K_i": 0.1,  # PI controller integral gain
-    "error_sum": 0,  # Integral error for PI controller
+    "K_p": 0.0002,  # PID controller proportional gain
+    "T_i": 0.9,  # PID controller integral gain /// czas zdwojenia
+    "T_d": 0.05, # PID controller derivative gain /// czas wyprzedzenia
+    "error_sum": 0,  # Integral error for PID controller
+    "last_error": 0, # Derivative error for PID controller
 }
 
 @app.route("/")
@@ -56,13 +58,15 @@ def update_simulation():
     # Debug print for incoming updates
     print("Before Update:", simulation_state)
     for _ in range(int(simulation_params["S_time"] / simulation_params["T_p"]) + 1):
-        control_signal, simulation_params["error_sum"] = calculate_control_signal(
+        control_signal, simulation_params["error_sum"], simulation_params["last_error"] = calculate_control_signal(
             simulation_params["T_target"],
             simulation_state["temperature"],
             simulation_params["K_p"],
-            simulation_params["K_i"],
-            simulation_params["error_sum"],
+            simulation_params["T_i"],
+            simulation_params["T_d"],
             simulation_params["T_p"],
+            simulation_params["error_sum"],
+            simulation_params["last_error"]
         )
         simulation_state["control_signal"] = control_signal
 
@@ -155,7 +159,7 @@ def get_heat_balance_plot_data():
         "layout": {
             "title": "Heat Supplied vs Heat Lost Over Time",
             "xaxis": {"title": "Time (s)"},
-            "yaxis": {"title": "Heat (W)"},
+            "yaxis": {"title": "Heat (J)"},
         },
     })
 
