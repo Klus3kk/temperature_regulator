@@ -57,7 +57,7 @@ def calculate_next_temperature(T, u, Q_max, Q_loss, C_v, d, V, T_p):
     return T + delta_T
 
 
-def calculate_control_signal(T_target, T_current, K_p, T_i, T_d, T_p, error_sum, last_error):
+def calculate_control_signal(T_target, T_current, K_p, T_i, T_p, error_sum):
     """
     Calculates the control signal using a PID controller.
 
@@ -90,10 +90,8 @@ def calculate_control_signal(T_target, T_current, K_p, T_i, T_d, T_p, error_sum,
     else:
         I = 0
 
-    D = K_p * T_d * ((error - last_error) / T_p)
-
     # Compute total control signal
-    control_signal = P + I + D
+    control_signal = P + I
 
     # Clamp control signal to [0, 1]
     control_signal = max(0, min(control_signal, 1))

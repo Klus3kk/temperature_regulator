@@ -27,13 +27,13 @@ simulation_params = {
     "C_v": 1200,  # Specific heat capacity of air (J/(kg*K))
     "d": 1.2,  # Air density in kg/m^3
     "V": 0.5,  # Volume in m^3
-    "T_p": 5,  # Time step in seconds /// okres próbkowania
+    "T_p": 2,  # Time step in seconds /// okres próbkowania
     "k_g": 5,  # Heat transfer coefficient for glass
     "k_w": 2,  # Heat transfer coefficient for walls
     "T_amb": 293,  # Ambient temperature (K)
     "T_target": 303,  # Target temperature (K)
     "K_p": 0.05,  # PI controller proportional gain
-    "T_i": 5,  # PI controller integral gain /// czas zdwojenia
+    "T_i": 4,  # PI controller integral gain /// czas zdwojenia
     "error_sum": 0,  # Integral error for PI controller
     "last_error": 0, # Derivative error for PI controller
 }
@@ -69,10 +69,8 @@ def update_simulation():
             simulation_state["temperature"],
             simulation_params["K_p"],
             simulation_params["T_i"],
-            10,
             simulation_params["T_p"],
             simulation_params["error_sum"],
-            simulation_params["last_error"]
         )
         simulation_state["control_signal"] = control_signal
 

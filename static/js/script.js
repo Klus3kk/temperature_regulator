@@ -5,7 +5,7 @@ document.addEventListener("DOMContentLoaded", () => {
         T_amb: document.getElementById("T_amb"),
         T_p: document.getElementById("T_p"),
         T_i: document.getElementById("T_i"),
-        //T_d: document.getElementById("T_d"),
+        K_p: document.getElementById("K_p"),
     };
 
     const values = {
@@ -13,7 +13,7 @@ document.addEventListener("DOMContentLoaded", () => {
         T_amb: document.getElementById("T_amb_value"),
         T_p: document.getElementById("T_p_value"),
         T_i: document.getElementById("T_i_value"),
-        //T_d: document.getElementById("T_d_value"),
+        K_p: document.getElementById("K_p_value"),
     };
 
     // Elements for update and graphs
