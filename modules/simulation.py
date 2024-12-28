@@ -53,5 +53,48 @@ def calculate_next_temperature(T, u, Q_max, Q_loss, C_v, d, V, T_p):
     Returns:
     * float: Next temperature in K.
     """
-    delta_T = ((u * Q_max - Q_loss) * T_p) / (C_v * d * V)
+    delta_T = ((u / 2 * Q_max - Q_loss) * T_p) / (C_v * d * V * 3)
     return T + delta_T
+
+
+def calculate_control_signal(T_target, T_current, K_p, T_i, T_p, error_sum):
+    """
+    Calculates the control signal using a PID controller.
+
+    Parameters:
+        T_target (float): Desired target temperature.
+        T_current (float): Current temperature.
+        K_p (float): Proportional gain.
+        T_i (float): Integral time constant.
+        T_p (float): Sampling time.
+        error_sum (float): Accumulated error for the integral component.
+        last_error (float): Error from the previous step for derivative calculation.
+
+    Returns:
+        float: The calculated control signal clamped to [0, 1].
+        float: Updated error_sum for the next iteration.
+        float: Current error to be used as last_error in the next iteration.
+    """
+    error = T_target - T_current
+
+    # Proportional term
+    P = K_p * error
+
+    # Integral term
+    if T_i != 0:
+        error_sum += error * T_p # Acumulate error over time
+        # Anti wind-up
+        max_integral = 1 / (K_p * (1 / T_i))
+        error_sum = max(-max_integral, min(error_sum, max_integral))
+        I = K_p * (1 / T_i) * error_sum
+    else:
+        I = 0
+
+    # Compute total control signal
+    control_signal = P + I
+
+    # Clamp control signal to [0, 1]
+    control_signal = max(0, min(control_signal, 1))
+
+    return control_signal, error_sum, error
+

@@ -25,7 +25,7 @@ body {
 
 /* Left Panel */
 #left-panel {
-    width: 22%;
+    width: 20%;
     background: #1e1e1e;
     padding: 15px;
     border-radius: 10px;
@@ -54,28 +54,34 @@ body {
 
 /* Right Panel */
 #right-panel {
-    flex-grow: 2;
+    flex-grow: 3;
     padding: 15px;
     background: #1e1e1e;
     border-radius: 10px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
-    overflow: hidden;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100%;
+    overflow-y: auto; /* Enable vertical scrolling */
+    overflow-x: hidden; /* Prevent horizontal scrolling */
+    display: block; /* Default block layout to stack plots without adjustments */
+    height: 100%; /* Panel height */
 }
 
-#plot {
+/* Individual Plot Styling */
+#temp-plot,
+#heat-balance-plot,
+#signal-plot {
     width: 100%;
-    height: 90%;
+    height: 100%; /* Each plot takes full height of the panel */
     border: 1px solid #444;
     border-radius: 10px;
     background-color: #222222;
-    transition: width 0.3s, height 0.3s;
+    margin-bottom: 15px; /* Optional: add some spacing for scrolling */
 }
 
-.plotly .main-svg .cartesianlayer .plot .scatter.trace .lines path {
+.plotly .main-svg .cartesianlayer .temp-plot .scatter.trace .lines path {
+    stroke: #ff0000 !important; 
+}
+
+.plotly .main-svg .cartesianlayer .heat-plot .scatter.trace .lines path {
     stroke: #ff0000 !important; 
 }
 

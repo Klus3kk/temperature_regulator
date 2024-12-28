@@ -1,54 +1,129 @@
 document.addEventListener("DOMContentLoaded", () => {
+    // Sliders and values
     const sliders = {
-        Q_max: document.getElementById("Q_max"),
-        C_v: document.getElementById("C_v"),
+        T_target: document.getElementById("T_target"),
         T_amb: document.getElementById("T_amb"),
-        k_g: document.getElementById("k_g"),
-        k_w: document.getElementById("k_w"),
-        u: document.getElementById("control-signal"),
+        T_p: document.getElementById("T_p"),
+        T_i: document.getElementById("T_i"),
+        K_p: document.getElementById("K_p"),
     };
 
     const values = {
-        Q_max: document.getElementById("Q_max_value"),
-        C_v: document.getElementById("C_v_value"),
+        T_target: document.getElementById("T_target_value"),
         T_amb: document.getElementById("T_amb_value"),
-        T_amb_celsius: document.getElementById("T_amb_celsius"),
-        k_g: document.getElementById("k_g_value"),
-        k_w: document.getElementById("k_w_value"),
-        u: document.getElementById("control_value"),
+        T_p: document.getElementById("T_p_value"),
+        T_i: document.getElementById("T_i_value"),
+        K_p: document.getElementById("K_p_value"),
     };
 
+    // Elements for update and graphs
     const updateParamsButton = document.getElementById("update-params");
     const updateMessage = document.getElementById("update-message");
-    const plotDiv = document.getElementById("plot");
+    const tempPlotDiv = document.getElementById("temp-plot");
+    const heatPlotDiv = document.getElementById("heat-plot");
+    const signalPlotDiv = document.getElementById("signal-plot");
+    const heatBalancePlotDiv = document.getElementById("heat-balance-plot");
 
+    // Update displayed values dynamically
     Object.keys(sliders).forEach((key) => {
         sliders[key].addEventListener("input", () => {
             values[key].textContent = sliders[key].value;
-            if (key === "T_amb") {
-                values.T_amb_celsius.textContent = (sliders.T_amb.value - 273).toFixed(1);
-            }
         });
     });
 
-    const updateGraph = () => {
-        fetch("/plot")
+    // Fetch and update all graphs
+    const updateGraphs = () => {
+        const layoutConfig = {
+            plot_bgcolor: "#222222",
+            paper_bgcolor: "#121212",
+            font: { color: "#e0e0e0" },
+            xaxis: { gridcolor: "#444" },
+            yaxis: { gridcolor: "#444" },
+        };
+
+        // Fetch temperature graph data
+        fetch("/temp-plot")
             .then((response) => response.json())
             .then((data) => {
-                data.layout.plot_bgcolor = "#222222";
-                data.layout.paper_bgcolor = "#121212";
-                data.layout.font = { color: "#e0e0e0" };
-                data.layout.xaxis = { gridcolor: "#444" };
-                data.layout.yaxis = { gridcolor: "#444" };
-                Plotly.react(plotDiv, data.data, data.layout);
+                // I know the code looked better, but then axis titles weren't visible. Please don't change it
+                data.layout.xaxis = {
+                    ...data.layout.xaxis,
+                    gridcolor: layoutConfig.xaxis.gridcolor,
+                };
+                data.layout.yaxis = {
+                    ...data.layout.yaxis,
+                    gridcolor: layoutConfig.yaxis.gridcolor,
+                };
+                data.layout.plot_bgcolor = layoutConfig.plot_bgcolor;
+                data.layout.paper_bgcolor = layoutConfig.paper_bgcolor;
+                data.layout.font = layoutConfig.font;
+                Plotly.react(tempPlotDiv, data.data, data.layout);
             })
-            .catch((err) => console.error("Error updating graph:", err));
+            .catch((err) => console.error("Error updating temperature graph:", err));
+
+        // Fetch heat loss graph data
+        // fetch("/heat-plot")
+        //     .then((response) => response.json())
+        //     .then((data) => {
+        //         data.layout = { ...data.layout, ...layoutConfig };
+        //         Plotly.react(heatPlotDiv, data.data, data.layout);
+        //     })
+        //     .catch((err) => console.error("Error updating heat loss graph:", err));
+
+        //commented this plot, because it's no longer needed i guess
+
+        // Fetch heat balance graph data
+        fetch("/heat-balance-plot")
+            .then((response) => response.json())
+            .then((data) => {
+                 data.layout.xaxis = {
+                    ...data.layout.xaxis,
+                    gridcolor: layoutConfig.xaxis.gridcolor,
+                };
+                data.layout.yaxis = {
+                    ...data.layout.yaxis,
+                    gridcolor: layoutConfig.yaxis.gridcolor,
+                };
+                data.layout.plot_bgcolor = layoutConfig.plot_bgcolor;
+                data.layout.paper_bgcolor = layoutConfig.paper_bgcolor;
+                data.layout.font = layoutConfig.font;
+                Plotly.react(heatBalancePlotDiv, data.data, data.layout);
+            })
+            .catch((err) => console.error("Error updating heat balance graph:", err));
+
+            fetch("/signal-plot")
+            .then((response) => response.json())
+            .then((data) => {
+                 data.layout.xaxis = {
+                    ...data.layout.xaxis,
+                    gridcolor: layoutConfig.xaxis.gridcolor,
+                };
+                data.layout.yaxis = {
+                    ...data.layout.yaxis,
+                    gridcolor: layoutConfig.yaxis.gridcolor,
+                };
+                data.layout.plot_bgcolor = layoutConfig.plot_bgcolor;
+                data.layout.paper_bgcolor = layoutConfig.paper_bgcolor;
+                data.layout.font = layoutConfig.font;
+                Plotly.react(signalPlotDiv, data.data, data.layout);
+            })
+            .catch((err) => console.error("Error updating singal graph:", err));
+
     };
 
+    // Update parameters when the button is clicked
     updateParamsButton.addEventListener("click", () => {
         const params = {};
+
+        // Gather slider values (convert to Kelvin)
         Object.keys(sliders).forEach((key) => {
-            params[key] = parseFloat(sliders[key].value);
+            if (key === "T_target" || key === "T_amb") {
+                const valueCelsius = parseFloat(sliders[key].value);
+                const valueKelvin = valueCelsius + 273;
+                params[key] = valueKelvin;
+            } else {
+                params[key] = parseFloat(sliders[key].value);
+            }
         });
 
         fetch("/update-params", {
@@ -57,28 +132,32 @@ document.addEventListener("DOMContentLoaded", () => {
             body: JSON.stringify(params),
         })
             .then(() => {
+                // Show confirmation message
                 updateMessage.style.display = "block";
                 setTimeout(() => {
                     updateMessage.style.display = "none";
                 }, 2000);
-                updateGraph();
+
+                updateSimulation();
             })
             .catch((err) => console.error("Error updating parameters:", err));
     });
 
-    sliders.u.addEventListener("input", () => {
-        const u = parseFloat(sliders.u.value);
+    const updateSimulation = () => {
         fetch("/update", {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ u }),
-        }).then(() => updateGraph());
-    });
+            headers: { "Content-type": "application/json" },
+        }).then(() => updateGraphs());
+    };
 
-    // Handle window resizing for responsive plot
+    // Adjust plot sizes when resizing the window
     window.addEventListener("resize", () => {
-        Plotly.Plots.resize(plotDiv);
+        Plotly.Plots.resize(tempPlotDiv);
+        Plotly.Plots.resize(heatPlotDiv);
+        Plotly.Plots.resize(heatBalancePlotDiv);
+        Plotly.Plots.resize(signalPlotDiv);
     });
 
-    updateGraph();
+    // Initial graph rendering
+    updateSimulation()
 });
