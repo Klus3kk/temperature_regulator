@@ -18,24 +18,24 @@ simulation_state = {
     "temp_history": {"time": [0], "temperature": [293]},
     "heat_history": {"time": [0], "heat_loss": [0]},
     "heat_balance_history": {"time": [0], "supplied": [0], "lost": [0]},
+    "signal_history": {"time": [0], "control_signal": [0]},
 }
 
 simulation_params = {
     "S_time": 1000,  # Simulation duration
-    "Q_max": 750,  # Maximum heater power in W
+    "Q_max": 1000,  # Maximum heater power in W
     "C_v": 1200,  # Specific heat capacity of air (J/(kg*K))
     "d": 1.2,  # Air density in kg/m^3
     "V": 0.5,  # Volume in m^3
-    "T_p": 0.5,  # Time step in seconds /// okres próbkowania
+    "T_p": 5,  # Time step in seconds /// okres próbkowania
     "k_g": 5,  # Heat transfer coefficient for glass
     "k_w": 2,  # Heat transfer coefficient for walls
     "T_amb": 293,  # Ambient temperature (K)
     "T_target": 303,  # Target temperature (K)
-    "K_p": 0.0002,  # PID controller proportional gain
-    "T_i": 0.9,  # PID controller integral gain /// czas zdwojenia
-    "T_d": 0.05, # PID controller derivative gain /// czas wyprzedzenia
-    "error_sum": 0,  # Integral error for PID controller
-    "last_error": 0, # Derivative error for PID controller
+    "K_p": 0.05,  # PI controller proportional gain
+    "T_i": 5,  # PI controller integral gain /// czas zdwojenia
+    "error_sum": 0,  # Integral error for PI controller
+    "last_error": 0, # Derivative error for PI controller
 }
 
 @app.route("/")
@@ -51,19 +51,25 @@ def update_simulation():
    # Reset history
     simulation_state["temp_history"] = {"time": [0], "temperature": [simulation_params["T_amb"]]}
     simulation_state["heat_history"] = {"time": [0], "heat_loss": [0]}
+    simulation_state["signal_history"] =  {"time": [0], "control_signal": [0]}
     simulation_state["heat_balance_history"] = {"time": [0], "supplied": [0], "lost": [0]}
+
     simulation_state["time"] = 0
     simulation_state["temperature"] = simulation_params["T_amb"]
+    simulation_state["control_signal"] = 0
+
+    simulation_params["error_sum"] = 0
+    simulation_params["last_error"] = 0
 
     # Debug print for incoming updates
-    print("Before Update:", simulation_state)
-    for _ in range(int(simulation_params["S_time"] / simulation_params["T_p"]) + 1):
+    print("Before Update:", simulation_params)
+    for _ in range(int(simulation_params["S_time"] / (simulation_params["T_p"])) + 1):
         control_signal, simulation_params["error_sum"], simulation_params["last_error"] = calculate_control_signal(
             simulation_params["T_target"],
             simulation_state["temperature"],
             simulation_params["K_p"],
             simulation_params["T_i"],
-            simulation_params["T_d"],
+            10,
             simulation_params["T_p"],
             simulation_params["error_sum"],
             simulation_params["last_error"]
@@ -92,6 +98,7 @@ def update_simulation():
         simulation_state["supplied_heat"] = Q_supplied
         simulation_state["temperature"] = new_temperature
         simulation_state["time"] += simulation_params["T_p"]
+        simulation_state["control_signal"] = control_signal
 
         # Append to history
         simulation_state["temp_history"]["time"].append(simulation_state["time"])
@@ -100,10 +107,12 @@ def update_simulation():
         simulation_state["heat_history"]["heat_loss"].append(Q_loss)
         simulation_state["heat_balance_history"]["time"].append(simulation_state["time"])
         simulation_state["heat_balance_history"]["supplied"].append(Q_supplied)
-        simulation_state["heat_balance_history"]["lost"].append(Q_loss)
+        simulation_state["heat_balance_history"]["lost"].append(Q_loss * 2)
+        simulation_state["signal_history"]["time"].append(simulation_state["time"])
+        simulation_state["signal_history"]["control_signal"].append(control_signal)
 
     # Debug print after update
-    print("After Update:", simulation_state)
+    print("After Update:", simulation_params)
 
     return jsonify({
         "time": simulation_state["time"],
@@ -117,16 +126,31 @@ def update_simulation():
 @app.route("/temp-plot", methods=["GET"])
 def get_temp_plot_data():
     temp_in_celsius = [
-        temp - 273.15 for temp in simulation_state["temp_history"]["temperature"]
+        temp - 273 for temp in simulation_state["temp_history"]["temperature"]
     ]
+    
+    # Retrieve target temperature in Celsius
+    target_temp_in_celsius = simulation_params["T_target"] - 273
+    
+    # x values for the target temperature line
+    time_values = simulation_state["temp_history"]["time"]
+    
     return jsonify({
         "data": [
             {
-                "x": simulation_state["temp_history"]["time"],
+                "x": time_values,
                 "y": temp_in_celsius,
                 "type": "scatter",
                 "mode": "lines",
                 "name": "Temperature",
+            },
+            {
+                "x": time_values,
+                "y": [target_temp_in_celsius] * len(time_values),
+                "type": "scatter",
+                "mode": "lines",
+                "name": "Target Temperature",
+                "line": {"dash": "dash", "color": "green"}
             }
         ],
         "layout": {
@@ -160,6 +184,26 @@ def get_heat_balance_plot_data():
             "title": "Heat Supplied vs Heat Lost Over Time",
             "xaxis": {"title": "Time (s)"},
             "yaxis": {"title": "Heat (J)"},
+        },
+    })
+
+
+@app.route("/signal-plot", methods=["GET"])
+def get_signal_plot_data():
+    return jsonify({
+        "data": [
+            {
+                "x": simulation_state["signal_history"]["time"],
+                "y": simulation_state["signal_history"]["control_signal"],
+                "type": "scatter",
+                "mode": "lines",
+                "name": "Control signal",
+            }
+        ],
+        "layout": {
+            "title": "Signal Over Time",
+            "xaxis": {"title": "Time (s)"},
+            "yaxis": {"title": "Signal"},
         },
     })
 

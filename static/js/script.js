@@ -3,11 +3,17 @@ document.addEventListener("DOMContentLoaded", () => {
     const sliders = {
         T_target: document.getElementById("T_target"),
         T_amb: document.getElementById("T_amb"),
+        T_p: document.getElementById("T_p"),
+        T_i: document.getElementById("T_i"),
+        //T_d: document.getElementById("T_d"),
     };
 
     const values = {
         T_target: document.getElementById("T_target_value"),
         T_amb: document.getElementById("T_amb_value"),
+        T_p: document.getElementById("T_p_value"),
+        T_i: document.getElementById("T_i_value"),
+        //T_d: document.getElementById("T_d_value"),
     };
 
     // Elements for update and graphs
@@ -15,6 +21,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const updateMessage = document.getElementById("update-message");
     const tempPlotDiv = document.getElementById("temp-plot");
     const heatPlotDiv = document.getElementById("heat-plot");
+    const signalPlotDiv = document.getElementById("signal-plot");
     const heatBalancePlotDiv = document.getElementById("heat-balance-plot");
 
     // Update displayed values dynamically
@@ -84,6 +91,24 @@ document.addEventListener("DOMContentLoaded", () => {
             })
             .catch((err) => console.error("Error updating heat balance graph:", err));
 
+            fetch("/signal-plot")
+            .then((response) => response.json())
+            .then((data) => {
+                 data.layout.xaxis = {
+                    ...data.layout.xaxis,
+                    gridcolor: layoutConfig.xaxis.gridcolor,
+                };
+                data.layout.yaxis = {
+                    ...data.layout.yaxis,
+                    gridcolor: layoutConfig.yaxis.gridcolor,
+                };
+                data.layout.plot_bgcolor = layoutConfig.plot_bgcolor;
+                data.layout.paper_bgcolor = layoutConfig.paper_bgcolor;
+                data.layout.font = layoutConfig.font;
+                Plotly.react(signalPlotDiv, data.data, data.layout);
+            })
+            .catch((err) => console.error("Error updating singal graph:", err));
+
     };
 
     // Update parameters when the button is clicked
@@ -92,9 +117,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
         // Gather slider values (convert to Kelvin)
         Object.keys(sliders).forEach((key) => {
-            const valueCelsius = parseFloat(sliders[key].value);
-            const valueKelvin = valueCelsius + 273;
-            params[key] = valueKelvin;
+            if (key === "T_target" || key === "T_amb") {
+                const valueCelsius = parseFloat(sliders[key].value);
+                const valueKelvin = valueCelsius + 273;
+                params[key] = valueKelvin;
+            } else {
+                params[key] = parseFloat(sliders[key].value);
+            }
         });
 
         fetch("/update-params", {
@@ -126,6 +155,7 @@ document.addEventListener("DOMContentLoaded", () => {
         Plotly.Plots.resize(tempPlotDiv);
         Plotly.Plots.resize(heatPlotDiv);
         Plotly.Plots.resize(heatBalancePlotDiv);
+        Plotly.Plots.resize(signalPlotDiv);
     });
 
     // Initial graph rendering

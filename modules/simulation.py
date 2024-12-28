@@ -53,7 +53,7 @@ def calculate_next_temperature(T, u, Q_max, Q_loss, C_v, d, V, T_p):
     Returns:
     * float: Next temperature in K.
     """
-    delta_T = ((u * Q_max - Q_loss) * T_p) / (C_v * d * V)
+    delta_T = ((u / 2 * Q_max - Q_loss) * T_p) / (C_v * d * V * 3)
     return T + delta_T
 
 
@@ -66,7 +66,6 @@ def calculate_control_signal(T_target, T_current, K_p, T_i, T_d, T_p, error_sum,
         T_current (float): Current temperature.
         K_p (float): Proportional gain.
         T_i (float): Integral time constant.
-        T_d (float): Derivative time constant.
         T_p (float): Sampling time.
         error_sum (float): Accumulated error for the integral component.
         last_error (float): Error from the previous step for derivative calculation.
@@ -82,11 +81,16 @@ def calculate_control_signal(T_target, T_current, K_p, T_i, T_d, T_p, error_sum,
     P = K_p * error
 
     # Integral term
-    error_sum += error * T_p  # Accumulate error over time
-    I = K_p * (1 / T_i) * error_sum if T_i != 0 else 0
+    if T_i != 0:
+        error_sum += error * T_p # Acumulate error over time
+        # Anti wind-up
+        max_integral = 1 / (K_p * (1 / T_i))
+        error_sum = max(-max_integral, min(error_sum, max_integral))
+        I = K_p * (1 / T_i) * error_sum
+    else:
+        I = 0
 
-    # Derivative term
-    D = K_p * T_d * ((error - last_error) / T_p) if T_p != 0 else 0
+    D = K_p * T_d * ((error - last_error) / T_p)
 
     # Compute total control signal
     control_signal = P + I + D
